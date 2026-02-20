@@ -9,6 +9,7 @@ const App = {
         const mouseX = ref(0);
         const mouseY = ref(0);
         const isTransitioning = ref(false);
+        const typingDone = ref(false);
 
         let animationId = null;
         let ctx = null;
@@ -18,8 +19,25 @@ const App = {
 
         const terminalContent = `
 > daniel jeranko
-> github.com/jerankda  
 > jerankda@pm.me
+> github
+
+─────────────────
+
+> habits.
+> festify.
+
+[ space to return ]`;
+
+        const terminalHTML = `
+> daniel jeranko
+> <a href="mailto:jerankda@pm.me" onclick="event.stopPropagation()">jerankda@pm.me</a>
+> <a href="https://github.com/jerankda" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">github</a>
+
+─────────────────
+
+> <a href="https://habits.jerankda.dev" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">habits.</a>
+> <a href="https://festify.jerankda.dev" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">festify.</a>
 
 [ space to return ]`;
 
@@ -174,10 +192,12 @@ const App = {
 
         const typeTerminal = async () => {
             terminalText.value = '';
+            typingDone.value = false;
             for (let i = 0; i < terminalContent.length; i++) {
                 terminalText.value += terminalContent[i];
                 await new Promise(r => setTimeout(r, 25));
             }
+            typingDone.value = true;
         };
 
         const toggleMode = async () => {
@@ -217,6 +237,7 @@ const App = {
             } else {
                 isTerminalMode.value = false;
                 terminalText.value = '';
+                typingDone.value = false;
                 initCanvas();
                 animate();
             }
@@ -256,7 +277,9 @@ const App = {
             canvas,
             isTerminalMode,
             terminalText,
+            terminalHTML,
             showCursor,
+            typingDone,
             toggleMode
         };
     },
@@ -266,7 +289,7 @@ const App = {
             
             <transition name="terminal">
                 <div v-if="isTerminalMode" class="terminal">
-                    <pre class="terminal-content">{{ terminalText }}<span class="cursor" :class="{ visible: showCursor }">_</span></pre>
+                    <pre class="terminal-content"><span v-if="typingDone" v-html="terminalHTML"></span><template v-else>{{ terminalText }}</template><span class="cursor" :class="{ visible: showCursor }">_</span></pre>
                 </div>
             </transition>
         </div>
@@ -348,6 +371,18 @@ style.textContent = `
             opacity: 0;
             transform: translate(-50%, -50%) scale(1.05);
         }
+    }
+
+    .terminal-content a {
+        color: #fff;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+
+    .terminal-content a:hover {
+        border-bottom-color: #fff;
     }
 
     @media (max-width: 768px) {
